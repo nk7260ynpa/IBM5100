@@ -37,28 +37,28 @@
 
 ## 3. Docker 容器化
 
-- [ ] 3.1 撰寫 `docker/Dockerfile`：
+- [x] 3.1 撰寫 `docker/Dockerfile`：
   - `FROM nginx:alpine`
   - `COPY web/ /usr/share/nginx/html/`
   - `EXPOSE 80`
   - 不需自訂 `CMD`。
-- [ ] 3.2 撰寫 `docker/docker-compose.yaml`：
+- [x] 3.2 撰寫 `docker/docker-compose.yaml`：
   - 定義 `web` service：`build: { context: .., dockerfile: docker/Dockerfile }`、`ports: ["8080:80"]`、`volumes: ["../logs:/var/log/nginx"]`、`restart: unless-stopped`。
   - 定義 `web-test` service：`image: node:20-alpine`、`working_dir: /app`、`volumes: [ "..:/app", "/app/node_modules" ]`、`command: sh -c "npm test"`（預設指令；實際以 `docker compose run --rm web-test ...` 覆寫）。
-- [ ] 3.3 撰寫 `docker/build.sh`：
+- [x] 3.3 撰寫 `docker/build.sh`：
   - 第一行 `#!/usr/bin/env bash`，接 `set -euo pipefail`。
   - 透過 `BASH_SOURCE[0]` 計算 script 所在路徑，cd 至 repo 根。
   - 執行 `docker compose -f docker/docker-compose.yaml build`。
   - 結尾 `echo "Build complete."`。
   - `chmod +x docker/build.sh`。
-- [ ] 3.4 撰寫 `run.sh`（專案根）：
+- [x] 3.4 撰寫 `run.sh`（專案根）：
   - `#!/usr/bin/env bash` + `set -euo pipefail`。
   - 切到 script 所在目錄。
   - `mkdir -p logs`。
   - 呼叫 `./docker/build.sh`。
   - `docker compose -f docker/docker-compose.yaml up`（前景；註解中提示 `-d` 可改背景）。
   - `chmod +x run.sh`。
-- [ ] 3.5 在 `web-test` service 內首次安裝相依：
+- [x] 3.5 在 `web-test` service 內首次安裝相依：
   - 執行 `docker compose -f docker/docker-compose.yaml run --rm web-test npm install`，產生 `package-lock.json`。
   - 將 `package-lock.json` commit。
   - **檔案範圍**：`docker/Dockerfile`、`docker/docker-compose.yaml`、`docker/build.sh`、`run.sh`、`package-lock.json`
