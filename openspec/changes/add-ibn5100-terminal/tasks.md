@@ -1,9 +1,9 @@
 ## 1. 專案骨架與工具鏈
 
-- [ ] 1.1 在專案根新增 `package.json`，欄位至少包含：`name: "ibn5100-terminal"`、`version: "0.1.0"`、`private: true`、`scripts.test = "vitest run"`、`scripts.test:watch = "vitest"`、`devDependencies.vitest = "^1.6.0"`（或最新穩定 1.x），其他欄位由 Specialist 視需要補。
-- [ ] 1.2 在專案根新增 `vitest.config.js`，設定 `test.environment = 'node'`（除非個別 test file 切到 jsdom）、`test.globals = false`、`test.include = ['tests/**/*.test.js']`。
-- [ ] 1.3 新增 `tests/.gitkeep`（佔位）與 `web/.gitkeep`（避免空資料夾）；後續 task 會逐步覆寫。
-- [ ] 1.4 新增 `logs/.gitkeep`（內容為空），確認 git 追蹤；驗證 `git status` 顯示為 untracked → 加入 commit。
+- [x] 1.1 在專案根新增 `package.json`，欄位至少包含：`name: "ibn5100-terminal"`、`version: "0.1.0"`、`private: true`、`scripts.test = "vitest run"`、`scripts.test:watch = "vitest"`、`devDependencies.vitest = "^1.6.0"`（或最新穩定 1.x），其他欄位由 Specialist 視需要補。
+- [x] 1.2 在專案根新增 `vitest.config.js`，設定 `test.environment = 'node'`（除非個別 test file 切到 jsdom）、`test.globals = false`、`test.include = ['tests/**/*.test.js']`。
+- [x] 1.3 新增 `tests/.gitkeep`（佔位）與 `web/.gitkeep`（避免空資料夾）；後續 task 會逐步覆寫。
+- [x] 1.4 新增 `logs/.gitkeep`（內容為空），確認 git 追蹤；驗證 `git status` 顯示為 untracked → 加入 commit。
   - **檔案範圍**：`/package.json`、`/vitest.config.js`、`/tests/.gitkeep`、`/web/.gitkeep`、`/logs/.gitkeep`
   - **驗收條件**：上述檔案皆存在且納入版本控制，`docker compose ... run --rm web-test npm test` 在 task 4 完成後可執行（本任務只需檔案就位）。
 
