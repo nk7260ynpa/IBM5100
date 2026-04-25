@@ -535,77 +535,107 @@
     return evalAPLExpr(line, env);
   }
 
+  // APL operator 字面集合（單元/雙元共用，由前後文決定身分）。
+  const APL_OPS = '+-×÷*⌈⌊|⍳⍴⍒⍋≡⍕~=≠<>≤≥,';
+
+  /**
+   * 將 APL 表達式以「由右而左求值」策略求值。
+   *
+   * 演算法：先把 source tokens 折疊成「結點序列」——把連續 num token 合成 vector、
+   * 把 `(...)` 子串遞迴求值成單一 value 結點，得到結點序列 `[ value | op, ... ]`。
+   * 然後從序列尾端往前掃：
+   *   - 維護「目前的右值 right」。
+   *   - 遇到 op：若 op 左邊還有 value 結點，套 dyadic(op, left, right)；
+   *     否則套 monadic(op, right）。結果回填為新的 right。
+   *   - 遇到 value 結點：直接覆寫 right（前一個 right 應已被某 op 消費）。
+   * 此實作對應 spec/apl-interpreter「由右而左求值」與「括號改變優先」的 scenarios
+   * （例：`2 × 3 + 4 = 14`、`(2 × 3) + 4 = 10`）。
+   *
+   * @param {string} line - APL 表達式（不含賦值 `←`）
+   * @param {object} env - APL 變數環境（id → value）
+   * @returns {*} 求值結果（純量、向量、字串），或 null（空輸入）
+   */
   function evalAPLExpr(line, env) {
     const toks = aplTokenize(line);
-    // Right-to-left evaluation, very simplified.
-    function readValue(i) {
-      // returns [value, nextIndex]
-      const tok = toks[i];
-      if (!tok) return [null, i];
-      if (tok.t === 'num') {
-        // collect strand of consecutive numbers (vector literal)
-        const vec = [tok.v]; let j = i + 1;
+    if (toks.length === 0) return null;
+
+    // ---------- step 1: 把 token 序列折疊成 nodes：value 結點 vs op 結點 ----------
+    // value 結點：{ kind:'val', v: <scalar | vector | string> }
+    // op 結點：    { kind:'op',  v: <glyph string> }
+    const nodes = [];
+    let i = 0;
+    while (i < toks.length) {
+      const t = toks[i];
+      if (t.t === 'num') {
+        // 連續 num → vector strand。
+        const vec = [t.v]; let j = i + 1;
         while (j < toks.length && toks[j].t === 'num') { vec.push(toks[j].v); j++; }
-        const v = vec.length === 1 ? vec[0] : vec;
-        return [v, j];
+        nodes.push({ kind: 'val', v: vec.length === 1 ? vec[0] : vec });
+        i = j; continue;
       }
-      if (tok.t === 'str') return [tok.v, i + 1];
-      if (tok.t === 'id') {
-        if (env[tok.v] === undefined) throw new Error('VALUE ERROR');
-        return [env[tok.v], i + 1];
+      if (t.t === 'str') { nodes.push({ kind: 'val', v: t.v }); i++; continue; }
+      if (t.t === 'id') {
+        if (env[t.v] === undefined) throw new Error('VALUE ERROR');
+        nodes.push({ kind: 'val', v: env[t.v] }); i++; continue;
       }
-      if (tok.t === 'op' && tok.v === '(') {
-        // find matching paren
+      if (t.t === 'op' && t.v === '(') {
+        // 找對應 `)` 並遞迴求值括號內。
         let depth = 1, j = i + 1;
         while (j < toks.length && depth > 0) {
           if (toks[j].t === 'op' && toks[j].v === '(') depth++;
-          else if (toks[j].t === 'op' && toks[j].v === ')') depth--;
-          if (depth === 0) break;
+          else if (toks[j].t === 'op' && toks[j].v === ')') { depth--; if (depth === 0) break; }
           j++;
         }
+        if (depth !== 0) throw new Error('SYNTAX ERROR');
         const inner = toks.slice(i + 1, j);
-        const innerStr = inner.map(t => t.t === 'op' ? t.v : (t.t === 'num' ? (t.v < 0 ? '¯' + (-t.v) : t.v) : t.v)).join(' ');
-        return [evalAPLExpr(innerStr, env), j + 1];
+        // 將內部 tokens 還原為文字後遞迴。對 num 帶負值需以 `¯` 重新呈現以維持 APL 字面。
+        const innerStr = inner.map((tt) => {
+          if (tt.t === 'op') return tt.v;
+          if (tt.t === 'num') return tt.v < 0 ? '¯' + String(-tt.v) : String(tt.v);
+          if (tt.t === 'str') return "'" + tt.v + "'";
+          return tt.v;
+        }).join(' ');
+        nodes.push({ kind: 'val', v: evalAPLExpr(innerStr, env) });
+        i = j + 1; continue;
       }
-      return [null, i];
+      if (t.t === 'op' && APL_OPS.includes(t.v)) {
+        nodes.push({ kind: 'op', v: t.v }); i++; continue;
+      }
+      // 未知 token：保留為 op 以便後續觸發 NONCE ERROR。
+      nodes.push({ kind: 'op', v: t.v }); i++;
     }
 
-    // Evaluate right-to-left
-    function evalFrom(i) {
-      let [right, j] = readValue(i);
-      if (right === null) return [null, j];
-      while (j < toks.length) {
-        const tok = toks[j];
-        if (!tok) break;
-        // operator?
-        if (tok.t === 'op' && '+-×÷*⌈⌊|⍳⍴⍒⍋≡⍕~=≠<>≤≥,'.includes(tok.v)) {
-          const op = tok.v;
-          j++;
-          // is there a left operand?
-          const [leftVal, k] = readValueAndContinue(j);
-          if (leftVal === null) {
-            right = aplApplyMonadic(op, right);
-          } else {
-            right = aplApplyDyadic(op, leftVal, right);
-            j = k; continue;
-          }
-        } else break;
-      }
-      return [right, j];
+    // ---------- step 2: 由右而左掃 nodes，套 monadic / dyadic ----------
+    // 從 nodes[len-1] 起：先確立最右側的 right。若最右為 op（如 `⍳ 5` → ['op:⍳','val:5']）
+    // 仍然從值開始累積。
+    let idx = nodes.length - 1;
+    if (nodes[idx].kind === 'op') {
+      // 不合法：表達式不能以 op 結尾（例如 `5 +`）。
+      // 但若整串只有一個 op（例如 lone `?`），交由後續 NONCE ERROR 流程。
+      if (nodes.length === 1) throw new Error('NONCE ERROR');
+      throw new Error('SYNTAX ERROR');
     }
-    function readValueAndContinue(i) {
-      const [v, j] = readValue(i);
-      if (v === null) return [null, i];
-      // continue evaluating to the left
-      if (j < toks.length && toks[j].t === 'op' && '+-×÷*⌈⌊|⍳⍴⍒⍋≡⍕~=≠<>≤≥,'.includes(toks[j].v)) {
-        const [vv, jj] = evalFrom(i);
-        return [vv, jj];
-      }
-      return [v, j];
-    }
+    let right = nodes[idx].v;
+    idx--;
 
-    const [result] = evalFrom(0);
-    return result;
+    while (idx >= 0) {
+      const node = nodes[idx];
+      if (node.kind !== 'op') {
+        // 兩個 value 相鄰（例如 `1 2 3 4`）已在 step 1 折疊；理論上不應發生。
+        throw new Error('SYNTAX ERROR');
+      }
+      const op = node.v;
+      // 看 op 左邊是否還有 value 結點。
+      const left = idx - 1 >= 0 && nodes[idx - 1].kind === 'val' ? nodes[idx - 1].v : null;
+      if (left !== null) {
+        right = aplApplyDyadic(op, left, right);
+        idx -= 2;
+      } else {
+        right = aplApplyMonadic(op, right);
+        idx -= 1;
+      }
+    }
+    return right;
   }
 
   function formatAPL(v) {

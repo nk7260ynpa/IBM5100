@@ -66,7 +66,7 @@
 
 ## 4. 單元測試（直譯器）
 
-- [ ] 4.1 `tests/basic-interpreter.test.js`：覆蓋 basic-interpreter spec 全部 Requirement：
+- [x] 4.1 `tests/basic-interpreter.test.js`：覆蓋 basic-interpreter spec 全部 Requirement：
   - tokenizer：數字 / 字串 / 識別字 / 單字 / 多字運算子 / 保留字 / 不合法字元拋 SYNTAX ERROR
   - 運算式優先序、unary `-`、`^`、函式呼叫
   - FUNCS：ABS / INT / SQR / RND / LEN / CHR$ / ASC / LEFT$ / RIGHT$ / MID$ / STR$ / VAL；UNDEF FN 例外
@@ -80,7 +80,7 @@
   - 行號程式儲存 / 替換 / 刪除 / LIST / NEW
   - RUN：空程式輸出 NO PROGRAM、安全上限 100,000、yield 行為（用 fake timer 驗 50 步 yield 即可）、`env.aborted` 旗標生效輸出 BREAK
   - 錯誤訊息格式 `?MSG IN <line>` vs 立即模式 `?MSG`
-- [ ] 4.2 `tests/apl-interpreter.test.js`：覆蓋 apl-interpreter spec 全部 Requirement：
+- [x] 4.2 `tests/apl-interpreter.test.js`：覆蓋 apl-interpreter spec 全部 Requirement：
   - tokenizer：`¯` 負號 / `'` 字串 / 連續數字向量 / 識別字保留大小寫
   - 單元符號 `⍳` / `⍴` / `-` / `÷` / `⌈` / `⌊` / `|` / `×` (sign) / `⍒` / `⍋`
   - NONCE ERROR 對未實作符號
@@ -90,7 +90,7 @@
   - 賦值 `←` 不 echo、變數查找、VALUE ERROR
   - 由右而左求值（`2 × 3 + 4 = 14`）、括號改變優先（`(2 × 3) + 4 = 10`）
   - `formatAPL` 規則（null/undefined→'', 整數無小數, 非整數 toFixed(4), 向量空白分隔）
-- [ ] 4.3 `tests/tapes.test.js`：覆蓋 tape-system spec 中與資料/解析相關 Requirement：
+- [x] 4.3 `tests/tapes.test.js`：覆蓋 tape-system spec 中與資料/解析相關 Requirement：
   - `window.TAPES`（或 Node `require('../web/tapes.js').TAPES`）長度 7、順序與 metadata 與 spec 完全一致
   - 對 HELLO / FIB / PRIME / GUESS / CALC 五卷磁帶 source，逐行 `IBMTerm.execImmediate` 載入後 `RUN`，斷言 io.print 累積輸出符合 spec：
     - HELLO 含 `HELLO, WORLD.\n`、`READY.\n`
@@ -99,18 +99,18 @@
     - CALC：mock io.input 依序回 `0`，斷言輸出 `BYE.\n` 即可（避免長交互）
     - GUESS：mock io.input 直接回 N（已知答案，需要 stub `Math.random` 鎖定 N），斷言一次猜中 `GOT IT IN 1 TRIES.\n`
   - 兩個 BUILTIN tape 的 source 字串為 `__BUILTIN_CLOCK__` 與 `__BUILTIN_DIVERGENCE__`
-- [ ] 4.4 `tests/audio-shape.test.js`：覆蓋 audio-engine spec 的「介面契約」與 enable/disable 行為：
+- [x] 4.4 `tests/audio-shape.test.js`：覆蓋 audio-engine spec 的「介面契約」與 enable/disable 行為：
   - 在 setup 內 stub `global.AudioContext` / `global.window` 提供假的 `AudioContext` class（具備所需 method 的 spy）。
   - 載入 `web/audio.js`（CommonJS 匯出）後，斷言 `IBMSound` 物件具備 10 個 method 全部為 function。
   - `setEnabled(false)` → 後續呼叫 `key` / `bootBeep` 等不會觸發 stub AudioContext 的 oscillator 建立呼叫。
   - `setEnabled(false)` → 內部 `tapeStop` 被呼叫（透過 spy 驗證）。
   - `init()` 在沒有 AudioContext 時不拋例外（試以 stub throw 模擬）。
   - 不需要實際發聲；驗證 oscillator / filter 建立次數與 envelope schedule 呼叫即可。
-- [ ] 4.5 `tests/easter-eggs.test.js`：覆蓋 easter-eggs spec 的可純測部分：
+- [x] 4.5 `tests/easter-eggs.test.js`：覆蓋 easter-eggs spec 的可純測部分：
   - 對 `EL PSY KONGROO` 與 `EL PSY CONGROO` trim+upper 後比對的純函式（若 app.js 抽出），或保守做法：對 `app.js` 中該分支的字串字面值做 grep 確認存在。
   - 對 divergence 目標序列字串字面值 grep（陣列順序與內容對齊 spec）。
   - WHISPERS 五句字串字面值 grep。
-- [ ] 4.6 `tests/ibn-name.test.js`：避商標掃描：
+- [x] 4.6 `tests/ibn-name.test.js`：避商標掃描：
   - 讀取 `web/index.html`、`web/styles.css`、`web/audio.js`、`web/interpreter.js`、`web/tapes.js`、`web/tweaks-panel.js`、`web/app.js`、`README.md` 全部內容。
   - 斷言「非白名單」內容不出現 `IBM` 或 `ibm`（白名單：`README.md` 內反引號包裹的 `\`IBM5100\``、git remote URL、`package.json#name`）。
   - 實作建議：先取出檔案文字，對 README 套白名單轉換（移除 ` \`IBM5100\` `、`https://github.com/.../IBM5100` 等子字串），再 regex `/IBM/i`。
