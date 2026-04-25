@@ -1,5 +1,7 @@
 ## ADDED Requirements
 
+> 命名空間慣例：本 spec 中所有以 `IBMSound.xxx` / `IBNSound.xxx` 形式書寫的呼叫皆指**同一個 api 物件**（見「全部音效整合於 `window.IBNSound` 命名空間」Requirement）。新撰寫程式碼以 `IBNSound` 為主要 API，`IBMSound` 為瀏覽器環境之相容別名。
+
 ### Requirement: WebAudio context lazy 初始化
 
 The system SHALL lazily create a single shared `AudioContext` on first sound request and SHALL resume it from `suspended` state automatically.
@@ -11,7 +13,7 @@ The system SHALL lazily create a single shared `AudioContext` on first sound req
 
 #### Scenario: 第一次呼叫播放函式時建立 ctx
 
-- **WHEN** 第一次呼叫 `IBMSound.bootBeep()`、`IBMSound.key()` 或 `IBMSound.init()`
+- **WHEN** 第一次呼叫 `IBNSound.bootBeep()`、`IBNSound.key()` 或 `IBNSound.init()`
 - **THEN** 嘗試 `new AudioContext()`（fallback 到 `webkitAudioContext`），失敗時設為 `null` 並安靜返回，不拋例外
 - **AND** 若 `ctx.state === 'suspended'`，立即 `resume()`
 
@@ -22,7 +24,7 @@ The system SHALL lazily create a single shared `AudioContext` on first sound req
 
 ### Requirement: 音效開關（enable / disable）
 
-The system SHALL expose `IBMSound.setEnabled(bool)` and `IBMSound.isEnabled()` to globally toggle audio output, and SHALL stop the currently spinning tape noise when disabled.
+The system SHALL expose `IBNSound.setEnabled(bool)` and `IBNSound.isEnabled()` to globally toggle audio output, and SHALL stop the currently spinning tape noise when disabled.
 
 #### Scenario: setEnabled(false) 停止磁帶噪音
 
@@ -41,7 +43,7 @@ The system SHALL produce a short mechanical-click sound combining a high-pass-fi
 
 #### Scenario: key click 結構
 
-- **WHEN** 呼叫 `IBMSound.key()` 且 enabled
+- **WHEN** 呼叫 `IBNSound.key()` 且 enabled
 - **THEN** 同時觸發兩條音源：
   1. 256-sample 1-channel 噪音 buffer，經 `BiquadFilterNode (highpass, 1500 Hz)`，最終增益 0.18
   2. 80–120 Hz 隨機頻率的 `square` oscillator，envelope (attack 0.001s, decay 0.02s, release 0.02s, peak 0.05)，持續 0.05 s
@@ -53,7 +55,7 @@ The system SHALL emit two square-wave beeps at 880 Hz and 1320 Hz, the second of
 
 #### Scenario: bootBeep 結構
 
-- **WHEN** 呼叫 `IBMSound.bootBeep()`
+- **WHEN** 呼叫 `IBNSound.bootBeep()`
 - **THEN** 第一個 oscillator：`square` 880 Hz，於 `t0` 起播 0.2 s（envelope peak 0.12）
 - **AND** 第二個 oscillator：`square` 1320 Hz，於 `t0 + 0.18` 起播 0.2 s
 
@@ -63,7 +65,7 @@ The system SHALL emit a sawtooth tone falling exponentially from 1200 Hz to 40 H
 
 #### Scenario: shutdownWhine 結構
 
-- **WHEN** 呼叫 `IBMSound.shutdownWhine()`
+- **WHEN** 呼叫 `IBNSound.shutdownWhine()`
 - **THEN** 一個 `sawtooth` oscillator 於 `t0` 起播 0.9 s
 - **AND** frequency.setValueAtTime(1200, t0)，再 exponentialRampToValueAtTime(40, t0 + 0.8)
 - **AND** gain 由 0.08 在 0.85 s 內 exponentialRampToValueAtTime 至 0.0001
@@ -74,7 +76,7 @@ The system SHALL emit a brief 320 Hz triangle tick whenever a knob value changes
 
 #### Scenario: knob tick 結構
 
-- **WHEN** 呼叫 `IBMSound.knob()`
+- **WHEN** 呼叫 `IBNSound.knob()`
 - **THEN** 一個 `triangle` oscillator 320 Hz，envelope (attack 0.001, decay 0.01, release 0.02, peak 0.04)，持續 0.05 s
 
 ### Requirement: 磁帶讀取噪音（loop + LFO）
@@ -83,7 +85,7 @@ The system SHALL produce a band-pass-filtered noise loop modulated by a 7 Hz sin
 
 #### Scenario: tapeStart 結構
 
-- **WHEN** 呼叫 `IBMSound.tapeStart()`
+- **WHEN** 呼叫 `IBNSound.tapeStart()`
 - **THEN** 建立 2 秒長 1-channel noise buffer 並以 `BufferSource` loop 播放
 - **AND** 透過 `BiquadFilterNode (bandpass, freq=1800, Q=0.6)` 過濾
 - **AND** 額外建立 7 Hz `sine` LFO，gain 800，連到 bandpass `frequency` 做 chirp 調變
@@ -96,7 +98,7 @@ The system SHALL produce a band-pass-filtered noise loop modulated by a 7 Hz sin
 
 #### Scenario: tapeStop fade-out
 
-- **WHEN** 呼叫 `IBMSound.tapeStop()`
+- **WHEN** 呼叫 `IBNSound.tapeStop()`
 - **THEN** 主 gain 在 0.2 s 內 exponentialRampToValueAtTime 至 0.0001
 - **AND** 0.25 s 後實際停止 BufferSource 與 LFO（容錯包 try/catch）
 
@@ -106,7 +108,7 @@ The system SHALL provide a `powerHum()` helper that returns a controllable handl
 
 #### Scenario: powerHum 起停
 
-- **WHEN** 呼叫 `IBMSound.powerHum()`
+- **WHEN** 呼叫 `IBNSound.powerHum()`
 - **THEN** 回傳 `{ stop: function }`，內部已啟動 60 Hz `sine` oscillator + gain 0.008
 - **WHEN** 呼叫該物件的 `stop()`
 - **THEN** oscillator 停止（容錯包 try/catch）
@@ -118,14 +120,20 @@ The system SHALL provide a `powerHum()` helper that returns a controllable handl
 - **WHEN** 關機 powerOffSeq 中
 - **THEN** 呼叫保存 handle 的 `stop()` 並清掉參考
 
-### Requirement: 全部音效整合於 `window.IBMSound` 命名空間
+### Requirement: 全部音效整合於 `window.IBNSound` 命名空間（並提供 `window.IBMSound` 別名）
 
-The system SHALL expose all audio API on a single `window.IBMSound` object with stable shape: `{ setEnabled, isEnabled, key, bootBeep, shutdownWhine, knob, tapeStart, tapeStop, powerHum, init }`.
+The system SHALL expose all audio API on a single `window.IBNSound` object with stable shape: `{ setEnabled, isEnabled, key, bootBeep, shutdownWhine, knob, tapeStart, tapeStop, powerHum, init }`，作為主要對外命名空間（呼應 design.md Goal #4 的避商標精神）。同時 SHALL 在瀏覽器環境提供 `window.IBMSound` 作為相容別名，指向**同一份 api 物件**（reference equality），以維持 design 原型既有引用（如 `web/app.js`）不破壞。
 
-#### Scenario: 介面契約
+#### Scenario: 介面契約（IBNSound）
 
 - **WHEN** `audio.js` 載入
-- **THEN** `typeof window.IBMSound === 'object'`，且上述 10 個 method 皆為 function
+- **THEN** `typeof window.IBNSound === 'object'`，且上述 10 個 method 皆為 function
+
+#### Scenario: IBMSound 為相容別名
+
+- **WHEN** `audio.js` 載入
+- **THEN** `window.IBMSound === window.IBNSound`（同一物件參照，非各自獨立的副本）
+- **AND** 對 `window.IBMSound.setEnabled(false)` 的呼叫等效於對 `window.IBNSound.setEnabled(false)` 的呼叫（共享內部 enabled 狀態）
 
 ### Requirement: 雙環境匯出
 
@@ -134,5 +142,5 @@ The system SHALL allow `audio.js` to be imported in Node test environment so the
 #### Scenario: Node 載入不拋錯
 
 - **WHEN** 在 Node 中 `require('../web/audio.js')`（測試 setup 提供 stub `AudioContext`）
-- **THEN** 模組成功載入，匯出 `IBMSound` 物件具備上述 10 個 method
+- **THEN** 模組成功載入，`module.exports` 為**與瀏覽器 `window.IBNSound`／`window.IBMSound` 同一份**的 api 物件（同 shape，包含上述 10 個 method）
 - **AND** 測試可斷言 enabled/disabled 切換、init 可被呼叫且不拋錯

@@ -58,3 +58,57 @@ design.md Goal #4 與 Decision 1 都明確指示**保留** `window.IBMTerm` / `w
 ```
 
 但實際 IIFE 末尾匯出的是 `window.IBMTerm = { makeBASICEnv, execImmediate, runProgram, evalAPL, formatAPL, tokenize }`。註解過時。task 2.4 要求 spec 行為一致即可，註解非實作；本次依 spec 實際行為改寫註解到反映真實 API（不再提及不存在的 `runBASIC`/`runAPL`/`evalBASICLine`），不影響任何 scenario。
+
+---
+
+## 2026-04-26 第 1 次 /opsx:verify PASS 後的 spec 微調
+
+### [Coordinator] [2026-04-26] [LOW] 補登 task 2.4 APL 由右而左求值修復的程序紀錄
+
+對 commit `4775cc4`（task 2.1–2.7 完成）勾選 task 2.4 為 `[x]` 與真正符合 spec 之時點不一致的補述。當時 `web/interpreter.js` 的 `evalAPLExpr` 仍為 left-to-right 求值，但 `apl-interpreter/spec.md` 的「由右而左求值與括號」Requirement 明確要求 `2 × 3 + 4 = 14`（right-to-left），實作與 spec 在該 commit 不一致。
+
+後續 commit `df8b2c1`（task 4.1–4.6 與測試新增）順帶把 `web/interpreter.js` line 541-639 重寫為 right-to-left，使實作回對 spec。本次修復涉及檔案 `web/interpreter.js` 屬於 task 2.4 宣告之「檔案範圍」，**檔案邊界合規**；按 OpenSpec 規範「實作與 spec 矛盾以 spec 為準」，修復方向亦正確。
+
+**程序問題**：Specialist 在發現實作偏離 spec 的當下，未事前於 `issues.md` 立紀錄即直接修復；雖未造成實質損害（修復方向與 spec 一致），但流程上應於發現時補登一條 `[Specialist]` 條目並在修復 commit 訊息中引用該條目。本次由 Coordinator 補登此紀錄以維持流程可追溯性，未來類似情形請由 Specialist 在實作 commit 之前以「`[Specialist] [日期] [HIGH] 實作偏離 spec：...，計畫於 task X.Y 修正方向 Z`」格式預先寫入 `issues.md`。
+
+**結論**：task 2.4 的 `[x]` 標記在 `df8b2c1` 之後實質為真；此條目僅為流程補登，不要求任何後續修補動作。
+
+### [Coordinator] [2026-04-26] [MED] 音效全域命名空間改以 `IBNSound` 為主、`IBMSound` 為相容別名
+
+**動機**：
+
+1. design.md Goal #4 的避商標精神要求對外可見識別字盡量避開 `IBM` 字元。`window.IBMSound` 全域是其中一處例外（design 原型遺留），與整體精神不一致。
+2. `web/audio.js` 註解（line 4-7、line 149-160）已預先寫了「掛 globalThis.IBNSound（外加相容別名 globalThis.IBMSound）」，但實作 line 158 只有 `root.IBMSound = api`——註解／spec 預期領先實作。
+3. 直接全面改名為 `IBNSound` 會破壞原型既有 `web/app.js`、`web/tweaks-panel.js` 對 `window.IBMSound.setEnabled(...)` 等的引用，與「pixel-perfect 重現最低風險路徑」相衝突。
+
+**決策方向**：採「主+別名」（IBNSound 為主、IBMSound 為相容別名）而非全面改名：
+
+- 主要 API：`window.IBNSound`（呼應避商標精神，新撰寫程式碼以此為準）
+- 相容別名：`window.IBMSound`（指向**同一份 api 物件**，保證 `window.IBMSound === window.IBNSound`）
+- 在 `audio.js` 內部以兩條賦值（`root.IBNSound = api; root.IBMSound = api;`）實現；不做深拷貝，避免兩物件 enabled 狀態漂移。
+
+**本次受影響的 artifact 增修**：
+
+- `specs/audio-engine/spec.md`：
+  - Requirement「全部音效整合於 `window.IBMSound` 命名空間」**改名**為「全部音效整合於 `window.IBNSound` 命名空間（並提供 `window.IBMSound` 別名）」；SHALL 句改為主+別名敘述。
+  - Scenario「介面契約」改為「介面契約（IBNSound）」並斷言 `window.IBNSound`；新增 Scenario「IBMSound 為相容別名」斷言 `window.IBMSound === window.IBNSound`。
+  - 「雙環境匯出」Requirement 補上「`module.exports` 與 `window.IBNSound` / `window.IBMSound` 為同一份 api」。
+  - 其他 Requirement 中 `IBMSound.xxx()` 形式呼叫改為 `IBNSound.xxx()`，並在檔頭加註「兩者指同一物件，新撰碼以 IBNSound 為主」的命名空間慣例。
+- `design.md`：
+  - Goal #4 改為「保留 `IBMTerm` / `TAPES` / Tweaks helpers」並加註音效採「主+別名」策略。
+  - Risks 段保留命名空間 mitigation，但同步更新為「`IBMTerm` / `TAPES` 加 `IBNSound`（別名 IBMSound）」。
+- `tasks.md`：
+  - 第 2 節 task 2.3（`web/audio.js`）下新增子章節 **2.3.1**，列入兩條 `[ ]` 未完成 sub-task：
+    - 2.3.1：修訂 `web/audio.js` 同時掛 `root.IBNSound` 與 `root.IBMSound`，更新 line 4-7 與 line 149-160 註解使其與實作一致。
+    - 2.3.2：補測 `tests/audio-shape.test.js`，新增「介面契約（IBNSound）」與「IBMSound === IBNSound」斷言。
+    - 檔案範圍邊界明確限制為 `web/audio.js`、`tests/audio-shape.test.js`。
+  - task 6.2 結尾加註「人工驗收項目仍以既有音效行為為準；新 IBNSound 命名空間僅 spec 層補強，不增使用者面互動」。
+- `issues.md`：本條與 APL 補登條目。
+
+**為何不改其他資產**：
+
+- `proposal.md` 與 `specs/tweaks-panel/spec.md` 同樣引用 `window.IBMSound`；前者為已歸檔 proposal，本次微調不動 proposal；後者的 Requirement「音效開關串接 IBMSound」描述的是面向消費者（tweaks-panel）的呼叫對象，由於別名存在，現有描述仍正確（呼叫 `window.IBMSound.setEnabled(...)` 等同呼叫 `window.IBNSound.setEnabled(...)`）。**建議**：使用者若希望 tweaks-panel spec 也改寫為以 `IBNSound` 為主，可由 Coordinator 在下一輪 spec 微調處理；本次依使用者「只指示音效部分」之邊界，不擅動。
+- `web/app.js` 既有 `window.IBMSound.xxx()` 引用：依「相容別名」設計，**保持原樣即正確**，不需 Specialist 改動。
+- `window.IBMTerm` 全域：使用者本次未指示處理，本次保留；如後續希望同樣套用「主+別名」可開新一輪微調。
+
+**範圍邊界**：本次 spec 微調由 Coordinator 完成，不撰寫任何實作或測試程式碼；後續 `web/audio.js` 與 `tests/audio-shape.test.js` 變更應由 Specialist 透過 `/opsx:apply` 接手執行新增的 task 2.3.1 / 2.3.2。

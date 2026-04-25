@@ -21,6 +21,18 @@
 - [x] 2.3 將 `_inbox/ibm5100/project/audio.jsx` 改寫為 `web/audio.js`：
   - 內容主體（IIFE 與所有合成函式）保持與原型一致。
   - 在 IIFE 結尾把對外 API 暴露邏輯改為「同檔雙環境」（見 design.md Decision 2）：當 `typeof module !== 'undefined' && module.exports` 為 true 時 `module.exports = { setEnabled, isEnabled, key, bootBeep, shutdownWhine, knob, tapeStart, tapeStop, powerHum, init }`，否則維持 `window.IBMSound = ...`。
+
+### 2.3.1 音效命名空間補強（IBNSound 主、IBMSound 別名）
+
+> 本子任務為第 2 次 spec 微調新增（2026-04-26），對應 audio-engine spec「全部音效整合於 `window.IBNSound` 命名空間（並提供 `window.IBMSound` 別名）」Requirement。`web/audio.js` 目前 line 158 僅掛 `root.IBMSound = api`，但 line 4-7 與 line 149-160 的註解已預告「掛 globalThis.IBNSound（外加相容別名 globalThis.IBMSound）」——實作落後於註解／spec，須補齊。
+
+- [ ] 2.3.1 修訂 `web/audio.js`：在 IIFE 尾端瀏覽器環境分支同時掛 `root.IBNSound = api` 與 `root.IBMSound = api`（兩者指向**同一份** api 物件，順序不拘但兩行都要）；並更新 line 4-7、line 149-160 的註解使其與實作一致（明確說明「IBNSound 為主、IBMSound 為相容別名」）。Node 環境分支（`module.exports = api`）保持不變，`module.exports` 與 `window.IBNSound` / `window.IBMSound` 在瀏覽器環境是同一參照。
+- [ ] 2.3.2 修訂 `tests/audio-shape.test.js`：補測「介面契約（IBNSound）」與「IBMSound 為相容別名」兩條 scenario：
+  - 載入 `web/audio.js` 後，斷言模組匯出（在 Node 為 `module.exports`、在瀏覽器為 `window.IBNSound`）具備 spec 列出的 10 個 method 全為 function。
+  - 在 stub `global.window` 環境下，斷言 `global.window.IBMSound === global.window.IBNSound`（同一參照，非深拷貝）。
+  - 既有 enabled/disabled 與 init 例外 scenario 保持不變，但測試名稱／註解可同步更新為 `IBNSound`。
+  - **檔案範圍（強制邊界）**：`web/audio.js`、`tests/audio-shape.test.js`。**禁止**修改 `web/app.js`、`web/tweaks-panel.js`、`web/index.html`、其他 spec 檔、其他測試檔。
+  - **驗收條件**：`docker compose -f docker/docker-compose.yaml run --rm web-test npm test` 全部 PASS；audio-engine spec 兩條新 scenario 皆有對應斷言；`grep -nE 'IBNSound|IBMSound' web/audio.js` 同時可見兩個 identifier 的賦值行；`web/app.js` 對 `window.IBMSound.setEnabled(...)` 的既有呼叫**仍可運作**（透過別名）。
 - [x] 2.4 將 `_inbox/ibm5100/project/interpreter.jsx` 改寫為 `web/interpreter.js`：
   - 主體（BASIC tokenizer / parser / FUNCS / evalNode / execStatement / runProgram / execImmediate / makeBASICEnv / APL tokenizer / monadic / dyadic / evalAPL / evalAPLExpr / formatAPL）保持原型行為一致。
   - IIFE 尾段以 host detection 同時匯出至 `window.IBMTerm`（瀏覽器）與 `module.exports`（Node）。
@@ -150,6 +162,7 @@
   - 拖動 BRIGHT / CONTRAST 旋鈕，亮度 / 對比變化
   - 開啟 Tweaks（透過 `window.postMessage({type:'__activate_edit_mode'},'*')` 或 fallback 鍵盤捷徑），切換 phosphor green / amber / white、scanlines、SOUND FX
   - 關機 → CRT 收縮動畫 + whine 音效，狀態完全重置
+  - **註（2026-04-26 spec 微調）**：人工驗收項目仍以原既有音效行為為準（按鍵聲、tape 噪音、boot beep、shutdownWhine、SOUND FX toggle）。新增的 `window.IBNSound` 命名空間僅在 spec 與 audio.js 內部增設別名，**不新增使用者面互動**；驗收時可額外於 DevTools console 確認 `window.IBMSound === window.IBNSound` 為 `true`，但這不是必驗項。
 - [x] 6.3 確認 `git status` 無遺漏；feature branch 上所有 commit 均已 push。
 - [ ] 6.4 若驗收中發現任何**spec 未涵蓋**的問題，寫入 `openspec/changes/add-ibn5100-terminal/issues.md`（格式：`[Specialist] [時間戳] [嚴重度] 描述`），不得擅自擴充 spec。
   - **檔案範圍**：無新增實作；僅執行測試 + 人工驗收 + 必要時更新 `issues.md`

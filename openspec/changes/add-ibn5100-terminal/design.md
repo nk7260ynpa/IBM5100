@@ -20,7 +20,7 @@
 1. 落地一份**可長期維護**的 IBN-5100 終端機網頁專案，視覺與互動 100% 對齊原型（每個 spec scenario 都有對應實作）。
 2. 提供 **Docker 一鍵啟動**：`./run.sh` 後可在 `http://localhost:8080` 看到完整終端機。
 3. 提供**可單元測試的純函式模組**（BASIC tokenizer / parser / evaluator、APL 求值、磁帶 fixtures），覆蓋率達到「能被 Verifier 信賴」的水準。
-4. 保留 design 原型的 **`window.IBMTerm` / `window.IBMSound` / `window.TAPES` / Tweaks helpers** 全域介面（pixel-perfect 重現的最低風險路徑）。
+4. 保留 design 原型的 **`window.IBMTerm` / `window.TAPES` / Tweaks helpers** 全域介面（pixel-perfect 重現的最低風險路徑）。音效命名空間則採「主+別名」策略：以 `window.IBNSound` 為主要 API（呼應避商標精神），另掛 `window.IBMSound` 為相容別名（指向同一份 api 物件），維持原型既有引用（如 `web/app.js`）不破壞。詳見 Decision 1 的 trade-off 與 audio-engine spec「全部音效整合於 `window.IBNSound` 命名空間」Requirement。
 5. 文件化（`README.md`）涵蓋啟動、測試、彩蛋、避商標約束。
 
 **Non-Goals:**
@@ -229,7 +229,7 @@ IBM5100/
   **Mitigation**：spec 已顯式列出例題（`2 × 3 + 4 = 14`）；測試以這些例題為基準。
 
 - **[Risk]** 設計原型的 `<script type="text/babel">` 不支援 ESM `import` —— 需要把所有 helper 透過 globals 串接。  
-  **Mitigation**：保留 design 原本的全域命名空間（`IBMTerm` / `IBMSound` / `TAPES`），spec 已明示。
+  **Mitigation**：保留 design 原本的全域命名空間（`IBMTerm` / `TAPES`）；音效部分以 `IBNSound` 為主要 API、`IBMSound` 為相容別名（同一份 api），spec 已明示。
 
 - **[Risk]** Production image 不含 Node 工具，與 test image 行為不對等可能掩蓋差異（例如 polyfill）。  
   **Mitigation**：所有純函式測試在 Node 跑；`web/` 內所有程式碼必須是 ES 2018+ 標準語法、避免依賴 Node 專屬 globals（測試 setup 中對 `window` / `AudioContext` 用 stub）。
