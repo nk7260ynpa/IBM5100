@@ -150,7 +150,7 @@
 ## 6. 整合與最終驗收
 
 - [x] 6.1 在 container 內執行 `docker compose -f docker/docker-compose.yaml run --rm web-test npm test`，所有測試 PASS（無 skip）。
-- [ ] 6.2 執行 `./run.sh` 啟動 `web` service，於本機瀏覽器（推薦 Chrome / Firefox 桌機版）打開 `http://localhost:8080`，逐項手動驗證：
+- [x] 6.2 執行 `./run.sh` 啟動 `web` service，於本機瀏覽器（推薦 Chrome / Firefox 桌機版）打開 `http://localhost:8080`，逐項手動驗證：
   - 開機動畫、POST 序列、READY. 提示
   - `HELP`、`TAPES`、`LOAD HELLO`、`RUN`、`LIST`、`NEW`
   - `LOAD FIB-12` → `RUN` 印出 12 行
