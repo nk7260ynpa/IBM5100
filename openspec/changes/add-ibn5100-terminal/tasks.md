@@ -137,7 +137,7 @@
 
 ## 6. 整合與最終驗收
 
-- [ ] 6.1 在 container 內執行 `docker compose -f docker/docker-compose.yaml run --rm web-test npm test`，所有測試 PASS（無 skip）。
+- [x] 6.1 在 container 內執行 `docker compose -f docker/docker-compose.yaml run --rm web-test npm test`，所有測試 PASS（無 skip）。
 - [ ] 6.2 執行 `./run.sh` 啟動 `web` service，於本機瀏覽器（推薦 Chrome / Firefox 桌機版）打開 `http://localhost:8080`，逐項手動驗證：
   - 開機動畫、POST 序列、READY. 提示
   - `HELP`、`TAPES`、`LOAD HELLO`、`RUN`、`LIST`、`NEW`
@@ -150,7 +150,7 @@
   - 拖動 BRIGHT / CONTRAST 旋鈕，亮度 / 對比變化
   - 開啟 Tweaks（透過 `window.postMessage({type:'__activate_edit_mode'},'*')` 或 fallback 鍵盤捷徑），切換 phosphor green / amber / white、scanlines、SOUND FX
   - 關機 → CRT 收縮動畫 + whine 音效，狀態完全重置
-- [ ] 6.3 確認 `git status` 無遺漏；feature branch 上所有 commit 均已 push。
+- [x] 6.3 確認 `git status` 無遺漏；feature branch 上所有 commit 均已 push。
 - [ ] 6.4 若驗收中發現任何**spec 未涵蓋**的問題，寫入 `openspec/changes/add-ibn5100-terminal/issues.md`（格式：`[Specialist] [時間戳] [嚴重度] 描述`），不得擅自擴充 spec。
   - **檔案範圍**：無新增實作；僅執行測試 + 人工驗收 + 必要時更新 `issues.md`
   - **驗收條件**：以上 6.1 / 6.2 全部通過；對應「整合測試」相當於本 change 的 acceptance gate，由 Verifier 在 `/opsx:verify` 中複核。
