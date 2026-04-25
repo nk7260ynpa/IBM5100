@@ -6,7 +6,8 @@
 # ----- 專案 log（CLAUDE.md：log 結尾檔案需忽略） -------------------------------
 *.log
 *.log.*
-logs/
+logs/*
+!logs/.gitkeep
 
 # ----- Claude Code 本地設定（個人偏好，不入團隊版控） --------------------------
 .claude/settings.local.json
@@ -85,3 +86,6 @@ service-account*.json
 *.orig
 .tmp/
 tmp/
+
+# ----- 暫存收件匣（design 檔案、外部素材，不入版控） -------------------------
+_inbox/

@@ -1,0 +1,13 @@
+{
+  "name": "ibn5100-terminal",
+  "version": "0.1.0",
+  "private": true,
+  "description": "IBN-5100 復古攜帶式電腦終端機網頁版",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^1.6.0"
+  }
+}
