@@ -9,7 +9,7 @@
 
 ## 2. 設計檔轉檔（保持 pixel-perfect）
 
-- [ ] 2.1 將 `_inbox/ibm5100/project/IBN-5100 Terminal.html` 複製為 `web/index.html`：
+- [x] 2.1 將 `_inbox/ibm5100/project/IBN-5100 Terminal.html` 複製為 `web/index.html`：
   - 把 `<script src="audio.jsx">` 改為 `<script src="audio.js">`
   - 把 `<script type="text/babel" src="interpreter.jsx">` 改為 `<script src="interpreter.js">`（純函式不需 Babel）
   - 把 `<script type="text/babel" src="tapes.jsx">` 改為 `<script src="tapes.js">`（純資料）
@@ -17,19 +17,19 @@
   - 保留 `<script type="text/babel" src="app.jsx">` 為 `app.js`（含 JSX）
   - HTML 標題、meta 完全沿用，僅檔名後綴改 `.js`。
   - 新增 `<link rel="icon" href="data:,">` 抑制 favicon 404（design.md Open Question 5）。
-- [ ] 2.2 將 `_inbox/ibm5100/project/styles.css` 原樣複製到 `web/styles.css`，**不改任何字元**（保留 design 修訂後的 phosphor 變數、scanline 公式、隱藏 input 規則）。
-- [ ] 2.3 將 `_inbox/ibm5100/project/audio.jsx` 改寫為 `web/audio.js`：
+- [x] 2.2 將 `_inbox/ibm5100/project/styles.css` 原樣複製到 `web/styles.css`，**不改任何字元**（保留 design 修訂後的 phosphor 變數、scanline 公式、隱藏 input 規則）。
+- [x] 2.3 將 `_inbox/ibm5100/project/audio.jsx` 改寫為 `web/audio.js`：
   - 內容主體（IIFE 與所有合成函式）保持與原型一致。
   - 在 IIFE 結尾把對外 API 暴露邏輯改為「同檔雙環境」（見 design.md Decision 2）：當 `typeof module !== 'undefined' && module.exports` 為 true 時 `module.exports = { setEnabled, isEnabled, key, bootBeep, shutdownWhine, knob, tapeStart, tapeStop, powerHum, init }`，否則維持 `window.IBMSound = ...`。
-- [ ] 2.4 將 `_inbox/ibm5100/project/interpreter.jsx` 改寫為 `web/interpreter.js`：
+- [x] 2.4 將 `_inbox/ibm5100/project/interpreter.jsx` 改寫為 `web/interpreter.js`：
   - 主體（BASIC tokenizer / parser / FUNCS / evalNode / execStatement / runProgram / execImmediate / makeBASICEnv / APL tokenizer / monadic / dyadic / evalAPL / evalAPLExpr / formatAPL）保持原型行為一致。
   - IIFE 尾段以 host detection 同時匯出至 `window.IBMTerm`（瀏覽器）與 `module.exports`（Node）。
   - 不改任何 BASIC / APL 行為（`-1`/`0` 真假慣例、由右而左 APL 求值、`NEXT WITHOUT FOR` 例外字串等），任何修正都需先寫入 `issues.md`。
-- [ ] 2.5 將 `_inbox/ibm5100/project/tapes.jsx` 改寫為 `web/tapes.js`：
+- [x] 2.5 將 `_inbox/ibm5100/project/tapes.jsx` 改寫為 `web/tapes.js`：
   - 純資料 `window.TAPES = [ ...7 tapes... ]` 保留；尾段加上 host detection 對 Node 匯出 `module.exports = { TAPES }`。
   - 七卷磁帶資料 100% 相符（id / label / side / desc / source）；`__BUILTIN_CLOCK__` / `__BUILTIN_DIVERGENCE__` 字串原樣保留。
-- [ ] 2.6 將 `_inbox/ibm5100/project/tweaks-panel.jsx` 改名為 `web/tweaks-panel.js`：完全不變動程式碼（含 host postMessage 協定、所有 helper 公開到 window）。
-- [ ] 2.7 將 `_inbox/ibm5100/project/app.jsx` 改名為 `web/app.js`：
+- [x] 2.6 將 `_inbox/ibm5100/project/tweaks-panel.jsx` 改名為 `web/tweaks-panel.js`：完全不變動程式碼（含 host postMessage 協定、所有 helper 公開到 window）。
+- [x] 2.7 將 `_inbox/ibm5100/project/app.jsx` 改名為 `web/app.js`：
   - 完全保留 design 行為（含 BOOT_LINES、WHISPERS、DivergenceView 目標序列、ClockView、prompt 縮排、SET / setBuiltinMode 邏輯、idle whisper 機率 0.4、間隔 45 s）。
   - 任何文字面向 UI 的字串若包含 `IBM`，改為 `IBN`（檢查 plate、boot、help、whisper、divergence、ClockView 標題等）。設計來源已是 `IBN-5100`，本步驟為防禦性檢查。
   - **檔案範圍**：`web/index.html`、`web/styles.css`、`web/audio.js`、`web/interpreter.js`、`web/tapes.js`、`web/tweaks-panel.js`、`web/app.js`

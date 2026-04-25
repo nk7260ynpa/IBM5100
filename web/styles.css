@@ -1,0 +1,536 @@
+/* IBN-5100-style retro terminal — Steins;Gate flavored
+   Single CRT fills the viewport with subtle bezel hint at edges. */
+
+:root {
+  --phosphor: #7fff5a;
+  --phosphor-dim: rgba(127, 255, 90, 0.55);
+  --phosphor-faint: rgba(127, 255, 90, 0.22);
+  --phosphor-glow: rgba(127, 255, 90, 0.85);
+  --bg-deep: #030604;
+  --bg-screen: #050b07;
+  --scanline-strength: 0.12;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #000;
+  color: var(--phosphor);
+  font-family: 'VT323', 'Courier New', monospace;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  cursor: default;
+  user-select: none;
+}
+
+/* Outer "machine" frame — a hint of beige plastic at the corners */
+.machine {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 120% 90% at 50% 50%, #0a0a08 0%, #050402 60%, #000 100%),
+    #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1400px;
+}
+
+.bezel {
+  position: relative;
+  width: min(94vw, 96vh * 1.35);
+  height: min(94vh, 96vw / 1.35);
+  border-radius: 36px;
+  background: linear-gradient(155deg, #2a2620 0%, #1a1612 35%, #0e0c08 100%);
+  box-shadow:
+    inset 0 0 0 2px #1a1610,
+    inset 0 4px 24px rgba(255, 220, 160, 0.05),
+    inset 0 -8px 30px rgba(0, 0, 0, 0.8),
+    0 40px 80px rgba(0, 0, 0, 0.9);
+  padding: 28px 32px 56px 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Manufacturer plate */
+.plate {
+  position: absolute;
+  top: 14px;
+  left: 36px;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  font-family: 'VT323', monospace;
+  color: #6a6055;
+  font-size: 16px;
+  letter-spacing: 0.18em;
+}
+.plate .model {
+  color: #8a7f6e;
+  letter-spacing: 0.32em;
+}
+.plate .serial {
+  font-size: 11px;
+  color: #524a3f;
+  letter-spacing: 0.2em;
+}
+
+.plate-right {
+  position: absolute;
+  top: 14px;
+  right: 36px;
+  display: flex;
+  gap: 18px;
+  font-family: 'VT323', monospace;
+  color: #524a3f;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+}
+
+/* CRT screen */
+.crt-cabinet {
+  flex: 1;
+  position: relative;
+  border-radius: 28px / 24px;
+  background: #000;
+  padding: 18px;
+  box-shadow:
+    inset 0 0 0 2px #0a0805,
+    inset 0 0 30px rgba(0, 0, 0, 0.95);
+  margin-top: 24px;
+}
+
+.crt {
+  position: absolute;
+  inset: 18px;
+  border-radius: 22px / 18px;
+  background: var(--bg-screen);
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 80px rgba(0, 0, 0, 0.95),
+    inset 0 0 24px rgba(0, 0, 0, 0.8);
+  /* subtle barrel effect via pseudo */
+}
+
+/* Screen content layer — drawn flat then transformed */
+.screen {
+  position: absolute;
+  inset: 0;
+  padding: 28px 36px;
+  font-family: 'VT323', 'Courier New', monospace;
+  font-size: 24px;
+  line-height: 1.18;
+  color: var(--phosphor);
+  text-shadow:
+    0 0 4px var(--phosphor-glow),
+    0 0 12px var(--phosphor-faint),
+    0 0 28px var(--phosphor-faint);
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  /* CRT curvature */
+  transform: perspective(1200px) rotateX(0.6deg);
+  transform-origin: center;
+}
+.screen::-webkit-scrollbar { display: none; }
+
+/* Scanlines overlay */
+.scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, calc(var(--scanline-strength) * 1)) 0px,
+    rgba(0, 0, 0, calc(var(--scanline-strength) * 1)) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  z-index: 5;
+}
+
+/* Soft vignette and screen glare */
+.glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 100% 60% at 30% 0%, rgba(255, 255, 255, 0.04), transparent 60%),
+    radial-gradient(ellipse 120% 90% at 50% 50%, transparent 50%, rgba(0, 0, 0, 0.55) 100%);
+  z-index: 6;
+}
+
+/* Slow flicker */
+.flicker {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--phosphor);
+  opacity: 0;
+  mix-blend-mode: screen;
+  z-index: 4;
+  animation: flick 6s infinite;
+}
+@keyframes flick {
+  0%, 92%, 100% { opacity: 0; }
+  93% { opacity: 0.012; }
+  94% { opacity: 0; }
+  95% { opacity: 0.02; }
+  96% { opacity: 0; }
+}
+
+/* Horizontal sweep band */
+.sweep {
+  position: absolute;
+  left: 0; right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(127, 255, 90, 0.025) 40%,
+    rgba(127, 255, 90, 0.06) 50%,
+    rgba(127, 255, 90, 0.025) 60%,
+    transparent 100%);
+  pointer-events: none;
+  z-index: 3;
+  animation: sweep 9s linear infinite;
+  mix-blend-mode: screen;
+}
+@keyframes sweep {
+  0% { top: -10%; }
+  100% { top: 110%; }
+}
+
+/* Cursor */
+.cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1em;
+  background: var(--phosphor);
+  vertical-align: -2px;
+  box-shadow: 0 0 8px var(--phosphor-glow);
+  animation: blink 1s steps(2) infinite;
+}
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Bottom control panel — knobs + tape slot + LEDs */
+.controls {
+  position: absolute;
+  bottom: 14px;
+  left: 36px;
+  right: 36px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  font-family: 'VT323', monospace;
+  color: #6a6055;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  z-index: 12;
+}
+
+.knob-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.knob {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #4a4438 0%, #2a251c 60%, #18140d 100%);
+  box-shadow:
+    inset 0 -2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 2px 2px rgba(255, 220, 160, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.7);
+  position: relative;
+  cursor: ns-resize;
+  border: 1px solid #0a0805;
+}
+.knob::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  width: 2px;
+  height: 10px;
+  background: #d4c4a8;
+  transform: translateX(-50%) rotate(var(--rot, 0deg));
+  transform-origin: 50% 13px;
+  box-shadow: 0 0 2px rgba(0,0,0,0.6);
+}
+.knob-label { color: #524a3f; font-size: 11px; }
+
+.led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2a0a0a;
+  box-shadow: inset 0 0 2px rgba(0,0,0,0.8);
+}
+.led.on {
+  background: #ff4a3a;
+  box-shadow: 0 0 6px #ff4a3a, inset 0 0 2px rgba(255,255,255,0.4);
+}
+.led.green.on {
+  background: #5aff7a;
+  box-shadow: 0 0 6px #5aff7a, inset 0 0 2px rgba(255,255,255,0.4);
+}
+.led.amber.on {
+  background: #ffb060;
+  box-shadow: 0 0 6px #ffb060, inset 0 0 2px rgba(255,255,255,0.4);
+}
+
+.power-switch {
+  width: 36px;
+  height: 20px;
+  background: #1a160e;
+  border-radius: 4px;
+  position: relative;
+  cursor: pointer;
+  border: 1px solid #0a0805;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.7);
+}
+.power-switch .slide {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 16px;
+  height: 16px;
+  background: linear-gradient(180deg, #d4c4a8, #8a7f6e);
+  border-radius: 2px;
+  transition: left 0.18s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+.power-switch.on .slide { left: 18px; }
+.power-switch::before {
+  content: 'O  I';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+  color: #4a4438;
+  font-size: 9px;
+  font-family: 'VT323', monospace;
+}
+
+/* Tape deck */
+.tape-deck {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.tape-slot {
+  width: 100px;
+  height: 22px;
+  background: #050402;
+  border-radius: 2px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.9);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 4px;
+  border: 1px solid #0a0805;
+  cursor: pointer;
+  position: relative;
+}
+.tape-cart {
+  flex: 1;
+  height: 12px;
+  background: linear-gradient(180deg, #2a2520, #18140d);
+  border-radius: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+  border: 1px solid #0a0805;
+  font-size: 8px;
+  color: #8a7f6e;
+  letter-spacing: 0.1em;
+}
+.tape-cart.empty {
+  background: transparent;
+  border: 1px dashed #2a2520;
+}
+.tape-reel {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #4a4438;
+  border: 1px solid #1a1610;
+}
+.tape-reel.spin { animation: spin 1.2s linear infinite; }
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Tape selector menu */
+.tape-menu {
+  position: absolute;
+  bottom: 32px;
+  right: 0;
+  background: #0a0a08;
+  border: 1px solid #2a2520;
+  padding: 10px;
+  min-width: 240px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.9);
+  z-index: 30;
+  font-family: 'VT323', monospace;
+}
+.tape-menu h4 {
+  margin: 0 0 8px 0;
+  color: #8a7f6e;
+  font-size: 14px;
+  letter-spacing: 0.2em;
+  font-weight: normal;
+  border-bottom: 1px solid #2a2520;
+  padding-bottom: 6px;
+}
+.tape-item {
+  padding: 6px 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  color: #c4b89e;
+  font-size: 16px;
+  letter-spacing: 0.1em;
+}
+.tape-item:hover { background: #1a1610; color: #e4d8be; }
+.tape-item .desc { color: #6a6055; font-size: 12px; }
+.tape-item.eject { border-top: 1px solid #2a2520; margin-top: 6px; padding-top: 8px; color: #8a7f6e; }
+
+/* Mode pill */
+.mode-pill {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--phosphor-dim);
+  margin-right: 8px;
+  letter-spacing: 0.2em;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+/* Off state — entire screen dark */
+.crt.off .screen,
+.crt.off .scanlines,
+.crt.off .sweep,
+.crt.off .flicker,
+.crt.off .glare {
+  display: none;
+}
+.crt.off::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 30% 4% at 50% 50%, rgba(127, 255, 90, 0.35) 0%, transparent 100%);
+  opacity: 0;
+  pointer-events: none;
+}
+.crt.off.shutting::after {
+  animation: crt-collapse 0.7s ease-out forwards;
+}
+@keyframes crt-collapse {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(0.02); }
+}
+
+/* Boot animation overlay */
+.crt.booting .screen {
+  animation: crt-warmup 1.4s ease-out;
+}
+@keyframes crt-warmup {
+  0% { filter: brightness(0); }
+  10% { filter: brightness(0.4); }
+  20% { filter: brightness(0.1) blur(2px); }
+  100% { filter: brightness(1); }
+}
+
+/* Hidden input field — captures focus only */
+.screen input {
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Steins;Gate divergence display */
+.divergence {
+  font-family: 'VT323', monospace;
+  font-size: 96px;
+  letter-spacing: 0.15em;
+  color: var(--phosphor);
+  text-shadow:
+    0 0 8px var(--phosphor-glow),
+    0 0 24px var(--phosphor-faint),
+    0 0 60px var(--phosphor-faint);
+  text-align: center;
+  margin-top: 80px;
+}
+.divergence-label {
+  text-align: center;
+  font-size: 18px;
+  letter-spacing: 0.4em;
+  color: var(--phosphor-dim);
+  margin-top: 12px;
+}
+
+/* Clock display */
+.bigclock {
+  font-family: 'VT323', monospace;
+  font-size: 140px;
+  letter-spacing: 0.08em;
+  text-align: center;
+  margin-top: 60px;
+  text-shadow:
+    0 0 10px var(--phosphor-glow),
+    0 0 30px var(--phosphor-faint);
+}
+.bigclock .colon { animation: blink 1s steps(2) infinite; }
+.bigclock-date {
+  text-align: center;
+  font-size: 24px;
+  letter-spacing: 0.3em;
+  color: var(--phosphor-dim);
+  margin-top: 16px;
+}
+
+/* Nameplate text */
+.namebadge {
+  font-family: 'VT323', monospace;
+  color: #8a7f6e;
+  font-size: 14px;
+  letter-spacing: 0.32em;
+}
+
+/* Help overlay (initial hint) */
+.hint {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'VT323', monospace;
+  color: #4a4438;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  z-index: 11;
+}
+
+/* Phosphor color variants are set via CSS variables on :root by JS */
