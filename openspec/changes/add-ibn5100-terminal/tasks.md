@@ -119,7 +119,7 @@
 
 ## 5. README 改寫
 
-- [ ] 5.1 重寫 `README.md`，章節結構建議：
+- [x] 5.1 重寫 `README.md`，章節結構建議：
   - 標題與一句話介紹（`IBN-5100 復古攜帶式電腦終端機網頁版`）
   - 「快速開始」：前置（Docker / Compose）、`./run.sh`、瀏覽器訪問 `http://localhost:8080`、停止指令 `docker compose ... down`
   - 「測試」：`docker compose -f docker/docker-compose.yaml run --rm web-test npm test`
@@ -131,7 +131,7 @@
   - 「OpenSpec 流程」：簡述本專案使用 SDD + 多代理（保留現有 README 該段，視情況整併）
   - 「已知限制 / Non-goals」：CDN 依賴、無 build step、無 E2E 測試
   - 「授權」：保留現狀
-- [ ] 5.2 `README.md` 須通過 `tests/ibn-name.test.js`（即 `IBM` 出現處皆已包白名單格式）。
+- [x] 5.2 `README.md` 須通過 `tests/ibn-name.test.js`（即 `IBM` 出現處皆已包白名單格式）。
   - **檔案範圍**：`README.md`
   - **驗收條件**：對應 spec docker-runtime「README 啟動章節」Requirement；測試 `tests/ibn-name.test.js` PASS。
 
