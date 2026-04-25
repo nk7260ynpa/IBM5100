@@ -1,17 +1,17 @@
-// 音效引擎單元測試（介面契約 + enable/disable）
+// 音效引擎單元測試（介面契約 + enable/disable + 命名空間別名）
 // 對應 spec：openspec/changes/add-ibn5100-terminal/specs/audio-engine/spec.md
 //
 // 由於 Node 環境沒有 WebAudio，本檔以 stub AudioContext 取代，重點驗證：
-// 1. 音效物件（內部命名空間 sound; 對應 design 原型 window 全域）具備 spec 列出的
+// 1. 音效物件（內部命名空間 sound；對應瀏覽器 IBNSound 主 API）具備 spec 列出的
 //    10 個 method 全為 function。
-// 2. setEnabled(false) → 呼叫播放函式不觸發 oscillator 建立。
-// 3. setEnabled(false) → tape noise 立即 stop（透過 cancelScheduledValues spy）。
-// 4. init() 在 AudioContext 建構失敗時靜默返回不拋例外。
+// 2. 在 stub global.window 環境下，IBMSound 與 IBNSound 為同一份 api 參照（相容別名）。
+// 3. setEnabled(false) → 呼叫播放函式不觸發 oscillator 建立。
+// 4. setEnabled(false) → tape noise 立即 stop（透過 cancelScheduledValues spy）。
+// 5. init() 在 AudioContext 建構失敗時靜默返回不拋例外。
 //
 // 註：本檔內變數命名使用 `sound`（非 design 原型內部全域識別字），以避免在 ibn-name.test.js
-// 的「字串字面值掃描」中誤觸 IBM 三字元（spec/easter-eggs Requirement「彩蛋與 IBN-5100 命名
-// 互斥於 IBM」對 tests/ 字串字面值同樣禁用）。對應 design.md Goal #4 的「保留 window 全域
-// 命名空間」僅及於 web/ 內 JS identifier，不及於 tests/ 字串描述。
+// 的「字串字面值掃描」中誤觸非預期字元（對 tests/ 字串字面值同樣禁用）。對應 design.md
+// Goal #4 的「保留 window 全域命名空間」僅及於 web/ 內 JS identifier，不及於 tests/ 字串描述。
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -97,6 +97,11 @@ let stats;
 beforeEach(async () => {
   const { FakeAudioContext, stats: s } = buildStubAudioContextFactory();
   stats = s;
+  // 防衛性清理：上一個 test 可能 stub 過 globalThis.window，這裡確保進入下一個 test
+  // 時走 Node 分支（root = globalThis）。
+  if (typeof globalThis.window !== 'undefined') {
+    delete globalThis.window;
+  }
   // audio.js IIFE 在載入時偵測 `window`/`globalThis`；先把 stub 掛上去再 import。
   globalThis.AudioContext = FakeAudioContext;
   globalThis.webkitAudioContext = FakeAudioContext;
@@ -107,8 +112,8 @@ beforeEach(async () => {
   sound = mod.default;
 });
 
-describe('音效物件介面契約', () => {
-  it('具備 spec 列出的 10 個 method 且皆為 function', () => {
+describe('音效物件介面契約（IBNSound）', () => {
+  it('module.exports 具備 spec 列出的 10 個 method 且皆為 function', () => {
     const methods = ['setEnabled', 'isEnabled', 'key', 'bootBeep', 'shutdownWhine',
                      'knob', 'tapeStart', 'tapeStop', 'powerHum', 'init'];
     for (const m of methods) {
@@ -118,6 +123,60 @@ describe('音效物件介面契約', () => {
 
   it('預設 enabled 為 true', () => {
     expect(sound.isEnabled()).toBe(true);
+  });
+
+  it('在 stub global.window 環境下，window.IBNSound 同樣具備 10 個 method', async () => {
+    // 模擬瀏覽器：先 stub global.window 並掛上 AudioContext，再重新載入 audio.js IIFE
+    // 觸發瀏覽器分支（root = window）。
+    const { FakeAudioContext } = buildStubAudioContextFactory();
+    const fakeWindow = { AudioContext: FakeAudioContext, webkitAudioContext: FakeAudioContext };
+    globalThis.window = fakeWindow;
+    globalThis.AudioContext = FakeAudioContext;
+    globalThis.webkitAudioContext = FakeAudioContext;
+    vi.resetModules();
+    await import('../web/audio.js');
+    const methods = ['setEnabled', 'isEnabled', 'key', 'bootBeep', 'shutdownWhine',
+                     'knob', 'tapeStart', 'tapeStop', 'powerHum', 'init'];
+    expect(typeof globalThis.window.IBNSound).toBe('object');
+    for (const m of methods) {
+      expect(typeof globalThis.window.IBNSound[m]).toBe('function');
+    }
+    delete globalThis.window;
+  });
+});
+
+describe('音效物件相容別名（舊命名空間）', () => {
+  it('在 stub global.window 環境下，舊別名與 IBNSound 為同一份 api 參照', async () => {
+    // 模擬瀏覽器分支：audio.js IIFE 偵測到 typeof window !== 'undefined' 後會把
+    // api 物件同時掛到 window.IBNSound 與舊命名空間（IBMSound）。spec scenario
+    // 「IBMSound 為相容別名」要求兩者必須是同一份參照（reference equality），非深拷貝。
+    const { FakeAudioContext } = buildStubAudioContextFactory();
+    const fakeWindow = { AudioContext: FakeAudioContext, webkitAudioContext: FakeAudioContext };
+    globalThis.window = fakeWindow;
+    globalThis.AudioContext = FakeAudioContext;
+    globalThis.webkitAudioContext = FakeAudioContext;
+    vi.resetModules();
+    await import('../web/audio.js');
+    expect(globalThis.window.IBMSound).toBe(globalThis.window.IBNSound);
+    delete globalThis.window;
+  });
+
+  it('透過舊別名呼叫 setEnabled(false) 等效於對 IBNSound 的呼叫（共享內部 enabled）', async () => {
+    // 同上 stub 瀏覽器環境後，透過舊別名修改 enabled，再用 IBNSound 讀取，驗證
+    // 兩者指向同一份內部閉包狀態（不是各自獨立副本）。
+    const { FakeAudioContext } = buildStubAudioContextFactory();
+    const fakeWindow = { AudioContext: FakeAudioContext, webkitAudioContext: FakeAudioContext };
+    globalThis.window = fakeWindow;
+    globalThis.AudioContext = FakeAudioContext;
+    globalThis.webkitAudioContext = FakeAudioContext;
+    vi.resetModules();
+    await import('../web/audio.js');
+    expect(globalThis.window.IBNSound.isEnabled()).toBe(true);
+    globalThis.window.IBMSound.setEnabled(false);
+    expect(globalThis.window.IBNSound.isEnabled()).toBe(false);
+    globalThis.window.IBNSound.setEnabled(true);
+    expect(globalThis.window.IBMSound.isEnabled()).toBe(true);
+    delete globalThis.window;
   });
 });
 

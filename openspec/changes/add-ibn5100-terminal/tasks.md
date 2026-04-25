@@ -26,8 +26,8 @@
 
 > 本子任務為第 2 次 spec 微調新增（2026-04-26），對應 audio-engine spec「全部音效整合於 `window.IBNSound` 命名空間（並提供 `window.IBMSound` 別名）」Requirement。`web/audio.js` 目前 line 158 僅掛 `root.IBMSound = api`，但 line 4-7 與 line 149-160 的註解已預告「掛 globalThis.IBNSound（外加相容別名 globalThis.IBMSound）」——實作落後於註解／spec，須補齊。
 
-- [ ] 2.3.1 修訂 `web/audio.js`：在 IIFE 尾端瀏覽器環境分支同時掛 `root.IBNSound = api` 與 `root.IBMSound = api`（兩者指向**同一份** api 物件，順序不拘但兩行都要）；並更新 line 4-7、line 149-160 的註解使其與實作一致（明確說明「IBNSound 為主、IBMSound 為相容別名」）。Node 環境分支（`module.exports = api`）保持不變，`module.exports` 與 `window.IBNSound` / `window.IBMSound` 在瀏覽器環境是同一參照。
-- [ ] 2.3.2 修訂 `tests/audio-shape.test.js`：補測「介面契約（IBNSound）」與「IBMSound 為相容別名」兩條 scenario：
+- [x] 2.3.1 修訂 `web/audio.js`：在 IIFE 尾端瀏覽器環境分支同時掛 `root.IBNSound = api` 與 `root.IBMSound = api`（兩者指向**同一份** api 物件，順序不拘但兩行都要）；並更新 line 4-7、line 149-160 的註解使其與實作一致（明確說明「IBNSound 為主、IBMSound 為相容別名」）。Node 環境分支（`module.exports = api`）保持不變，`module.exports` 與 `window.IBNSound` / `window.IBMSound` 在瀏覽器環境是同一參照。
+- [x] 2.3.2 修訂 `tests/audio-shape.test.js`：補測「介面契約（IBNSound）」與「IBMSound 為相容別名」兩條 scenario：
   - 載入 `web/audio.js` 後，斷言模組匯出（在 Node 為 `module.exports`、在瀏覽器為 `window.IBNSound`）具備 spec 列出的 10 個 method 全為 function。
   - 在 stub `global.window` 環境下，斷言 `global.window.IBMSound === global.window.IBNSound`（同一參照，非深拷貝）。
   - 既有 enabled/disabled 與 init 例外 scenario 保持不變，但測試名稱／註解可同步更新為 `IBNSound`。

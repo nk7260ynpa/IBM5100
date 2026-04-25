@@ -1,9 +1,10 @@
 // Web Audio synth — keypress, tape spin, boot beep, knob click.
 // All sounds are synthesized — no asset files.
 //
-// 設計來源：design 原型 audio.jsx；本檔僅在 IIFE 末尾改為「同檔雙環境」匯出
-// （瀏覽器掛 globalThis.IBNSound，Node 走 module.exports），並以 window.IBNSound 為相容
-// 別名同時掛上以維持原型 API 可用性。
+// 設計來源：design 原型 audio.jsx；本檔在 IIFE 末尾改為「同檔雙環境」匯出
+// （瀏覽器同時掛 globalThis.IBNSound 與 globalThis.IBMSound，Node 走 module.exports）。
+// 命名空間慣例：`IBNSound` 為主要對外命名空間，`IBMSound` 為相容別名，兩者指向
+// 同一份 api 物件（reference equality），維持 design 原型既有引用（如 web/app.js）不破壞。
 
 (function (root) {
   let ctx = null;
@@ -147,14 +148,16 @@
   };
 
   // 雙環境匯出（design.md Decision 2）：
-  // - 瀏覽器掛 globalThis.IBNSound（外加相容別名 globalThis.IBMSound 給原型既有引用）
-  // - Node / Vitest 透過 CommonJS 取得
+  // - 瀏覽器同時掛 globalThis.IBNSound（主要 API）與 globalThis.IBMSound（相容別名）
+  //   兩者指向同一份 api 物件（reference equality），共享內部 enabled / tapeNoise 狀態
+  // - Node / Vitest 透過 CommonJS 取得 module.exports，與瀏覽器全域為同一份 api 參照
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   }
   if (root) {
-    // 內部命名空間沿用 design 原型的 IBMSound（spec/easter-eggs 的 IBM 規則僅及於字串
-    // 字面值，不及於 JS identifier；見 issues.md 解讀）。
+    // IBNSound 為主要對外命名空間，IBMSound 為相容別名（給 design 原型既有引用，如
+    // web/app.js）；兩者必須是同一份 api 參照，不可深拷貝。
+    root.IBNSound = api;
     root.IBMSound = api;
   }
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : null));
