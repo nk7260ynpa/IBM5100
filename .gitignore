@@ -85,3 +85,6 @@ service-account*.json
 *.orig
 .tmp/
 tmp/
+
+# ----- 暫存收件匣（design 檔案、外部素材，不入版控） -------------------------
+_inbox/
