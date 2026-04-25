@@ -1,0 +1,87 @@
+# =============================================================================
+# IBM5100 — .gitignore
+# 規則來源：使用者全域 ~/.claude/CLAUDE.md 偏好
+# =============================================================================
+
+# ----- 專案 log（CLAUDE.md：log 結尾檔案需忽略） -------------------------------
+*.log
+*.log.*
+logs/
+
+# ----- Claude Code 本地設定（個人偏好，不入團隊版控） --------------------------
+.claude/settings.local.json
+
+# ----- OpenSpec 工作暫存（保留 changes/ 與 specs/，僅忽略個人筆記） -----------
+openspec/.cache/
+openspec/.tmp/
+
+# ----- OS 雜訊 ----------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ----- 編輯器 / IDE -----------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# ----- Python -----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+build/
+dist/
+pip-wheel-metadata/
+.venv/
+venv/
+env/
+ENV/
+
+# ----- Node.js / 前端 ---------------------------------------------------------
+node_modules/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+dist/
+out/
+*.tsbuildinfo
+
+# ----- Docker -----------------------------------------------------------------
+docker/.env
+docker/.env.local
+
+# ----- 環境變數 / 機敏資料（避免 commit 機密） --------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+secrets/
+credentials.json
+service-account*.json
+
+# ----- 暫存 / 編譯產物 --------------------------------------------------------
+*.tmp
+*.bak
+*.orig
+.tmp/
+tmp/
