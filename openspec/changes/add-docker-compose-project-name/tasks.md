@@ -18,7 +18,7 @@
 
 ## 2. 自動化檢查與測試
 
-- [ ] 2.1 新增 vitest 測試 `tests/docker-compose-config.test.js` 以守護 `name:` 設定
+- [x] 2.1 新增 vitest 測試 `tests/docker-compose-config.test.js` 以守護 `name:` 設定
   - **檔案範圍**：`tests/docker-compose-config.test.js`（新檔）；如需 yaml 解析依賴，連同 `package.json`、`package-lock.json` 一併納入範圍
   - **驗收條件**：
     - [ ] 測試讀取 `docker/docker-compose.yaml`，斷言頂層 `name === "ibn5100-terminal"`
