@@ -1,6 +1,6 @@
 ## 1. 配置修補
 
-- [ ] 1.1 在 `docker/docker-compose.yaml` 頂層（與 `services:`、`volumes:` 同層級）新增一行 `name: ibn5100-terminal`
+- [x] 1.1 在 `docker/docker-compose.yaml` 頂層（與 `services:`、`volumes:` 同層級）新增一行 `name: ibn5100-terminal`
   - **檔案範圍**：`docker/docker-compose.yaml`
   - **驗收條件**：
     - [ ] 檔案頂層存在 `name: ibn5100-terminal`，且不在任一 service block 內
@@ -8,7 +8,7 @@
     - [ ] 既有 `web` 與 `web-test` 兩個 service 的設定（image、build、ports、volumes、restart、command）完全未被改動
     - [ ] 對應 spec：`docker-runtime` Requirement「Compose project name 隔離」之 Scenario「yaml 頂層含 `name: ibn5100-terminal`」
 
-- [ ] 1.2 驗證 `run.sh` 與 `docker/build.sh` 不需改動
+- [x] 1.2 驗證 `run.sh` 與 `docker/build.sh` 不需改動
   - **檔案範圍**：`run.sh`、`docker/build.sh`（僅檢查，預期不修改；若實際必須修改，須先寫入 `issues.md` 由 Coordinator 重新拆 task）
   - **驗收條件**：
     - [ ] 確認兩支腳本未設定 `COMPOSE_PROJECT_NAME` 環境變數，且未使用 `-p <name>` flag 覆寫 yaml 內的 `name`
