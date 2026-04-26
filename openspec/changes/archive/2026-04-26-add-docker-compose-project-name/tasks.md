@@ -38,10 +38,10 @@
     - [ ] 章節遵循 Google Markdown Style Guide
     - [ ] 對應 spec：`docker-runtime` Requirement「Compose project name 隔離」之 Scenario「使用者遷移指引存在」
 
-- [ ] 3.2 人工驗收：實際執行遷移與啟動，確認 project 隔離成功
+- [x] 3.2 人工驗收：實際執行遷移與啟動，確認 project 隔離成功
   - **檔案範圍**：無檔案異動（純驗證步驟）；驗證結果寫入 commit message 或 issues.md
   - **驗收條件**：
-    - [ ] 依 README 指引清理舊 `ibn5100-terminal-web` container（一次性）
-    - [ ] 執行 `./run.sh`，確認啟動 log 不含跨 repo 的 service 名稱（如 `flightprice-web Recreated`、`Found orphan containers ([flightprice-db ...])`）
-    - [ ] 執行 `docker compose ls`，確認列表中存在獨立 project `ibn5100-terminal`，且不再與其他本機專案共用 default project `docker`
-    - [ ] 對應 spec：`docker-runtime` Requirement「Compose project name 隔離」之 Scenario「docker compose ls 顯示獨立 project」與「啟動時不再出現跨 repo 的 orphan 警告」
+    - [x] 依 README 指引清理舊 `ibn5100-terminal-web` container（一次性）
+    - [x] 執行 `./run.sh`，確認啟動 log 不含跨 repo 的 service 名稱（如 `flightprice-web Recreated`、`Found orphan containers ([flightprice-db ...])`）
+    - [x] 執行 `docker compose ls`，確認列表中存在獨立 project `ibn5100-terminal`，且不再與其他本機專案共用 default project `docker`
+    - [x] 對應 spec：`docker-runtime` Requirement「Compose project name 隔離」之 Scenario「docker compose ls 顯示獨立 project」與「啟動時不再出現跨 repo 的 orphan 警告」
