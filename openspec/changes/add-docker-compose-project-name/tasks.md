@@ -29,7 +29,7 @@
 
 ## 3. 文件與遷移指引
 
-- [ ] 3.1 在 `README.md` 加入「升級指引」或「故障排除」章節，說明既有 container 遷移
+- [x] 3.1 在 `README.md` 加入「升級指引」或「故障排除」章節，說明既有 container 遷移
   - **檔案範圍**：`README.md`
   - **驗收條件**：
     - [ ] 章節包含「為何需要遷移」一句話背景（default project name `docker` 與其他 repo 衝突）
