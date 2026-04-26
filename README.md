@@ -47,6 +47,51 @@ docker compose -f docker/docker-compose.yaml run --rm web-test npm test
 
 ---
 
+## 故障排除
+
+### 升級指引：Compose project name 變更（既有 container 遷移）
+
+本 repo 從 `add-docker-compose-project-name` change 起，於
+`docker/docker-compose.yaml` 頂層加入 `name: ibn5100-terminal`，將 compose
+project 隔離為獨立識別碼。若你曾在更早的版本以舊 `docker-compose.yaml`
+（無頂層 `name:` 行）啟動過本 repo，docker compose 會把 container 留在
+default project `docker` 之下，與本機其他採同樣 `docker/docker-compose.yaml`
+結構的 repo 共用同一個 default project，可能導致：
+
+- 啟動時看到不屬於本 repo 的 service 被列為 orphan（例如其他專案的
+  資料庫、監控、ML 等 container 名稱）。
+- 對本 repo 執行 `docker compose ... down --remove-orphans` 時誤殺其他
+  repo 的 container。
+
+升級到新版 yaml 後，請執行下列一次性清理步驟，把舊 default project 下的
+本 repo container 移除，再以新 project name 重新啟動：
+
+```sh
+# 1. 確認舊 container 是否仍在 default project 下
+docker ps -a --filter "name=ibn5100-terminal-web"
+
+# 2. 若存在，移除舊 container（不會影響其他 repo 的 service）
+docker compose -p docker -f docker/docker-compose.yaml down web web-test 2>/dev/null \
+  || docker rm -f ibn5100-terminal-web
+
+# 3. 以新 project name 啟動
+./run.sh -d
+
+# 4. 驗證 project 隔離成功（列表中應出現獨立 project ibn5100-terminal）
+docker compose ls
+```
+
+清理完成後，後續所有 `./run.sh`、`docker compose -f docker/docker-compose.yaml ...`
+指令皆會自動採用 `ibn5100-terminal` 作為 project name，不再與本機其他 repo
+共用 default project，亦不需要在 CLI 帶 `-p` flag 或設定
+`COMPOSE_PROJECT_NAME` 環境變數。
+
+> 需要 docker compose v2.20+（Docker Desktop 4.25+ 內建即可）。版本過舊時
+> docker 會在啟動階段給出可辨識錯誤；revert 該 yaml 的頂層 `name:` 行即可
+> 暫時回退。
+
+---
+
 ## 專案架構
 
 ```

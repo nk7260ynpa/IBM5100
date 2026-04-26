@@ -1,6 +1,11 @@
 # IBN-5100 Terminal — Docker Compose 定義
 # 兩個 service：web（production，nginx:alpine）、web-test（測試，node:20-alpine）。
 # 詳見 openspec/changes/add-ibn5100-terminal/design.md Decision 5。
+#
+# 頂層 `name:` 將本 repo 的 compose project 隔離為 `ibn5100-terminal`，避免與本機其他
+# 採同樣 docker/docker-compose.yaml 結構的 repo 共用 default project name `docker`。
+# 詳見 openspec/changes/add-docker-compose-project-name/design.md Decision 1。
+name: ibn5100-terminal
 
 services:
   web:
